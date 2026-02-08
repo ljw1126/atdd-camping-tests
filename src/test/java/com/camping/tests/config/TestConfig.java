@@ -2,6 +2,7 @@ package com.camping.tests.config;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.Properties;
 
@@ -12,16 +13,49 @@ public class TestConfig {
     static {
         try (InputStream input = TestConfig.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (input == null) {
-                System.out.println("Sorry, unable to find config.properties");
+                throw new RuntimeException("Error: config.properties file not found in classpath.");
             }
             properties.load(input);
         } catch (IOException ex) {
-            ex.printStackTrace();
+            throw new RuntimeException("Error loading config.properties file: " + ex.getMessage(), ex);
         }
     }
 
     public static String getProperty(String key) {
-        return System.getProperty(key, properties.getProperty(key));
+        if (key == null || key.trim().isEmpty()) {
+            throw new RuntimeException("Property key cannot be null or empty.");
+        }
+
+        String normalizedKey = normalizeKey(key);
+        String envValue = System.getenv(normalizedKey);
+        if(envValue != null && !envValue.isEmpty()) {
+            return envValue;
+        }
+
+        String sysValue = System.getProperty(normalizedKey);
+        if (sysValue != null && !sysValue.isEmpty()) {
+            return sysValue;
+        }
+
+        String value = properties.getProperty(normalizedKey);
+        if (value != null && !value.isEmpty()) {
+            return value;
+        }
+
+        throw new RuntimeException("Required property '" + key + "' (normalized to '" + normalizedKey + "') not found in system properties or config.properties.");
+    }
+
+    public static String getProperty(String key, String defaultValue) {
+        try {
+            return getProperty(key);
+        } catch (RuntimeException e) {
+            if (defaultValue != null) return defaultValue;
+            throw e;
+        }
+    }
+
+    private static String normalizeKey(String key) {
+        return key.toLowerCase().replace('-', '.').replace('_', '.');
     }
 
     public static String getKioskBaseUrl() {
@@ -43,9 +77,8 @@ public class TestConfig {
     public static String getPaymentMockHost() {
         try {
             return URI.create(getPaymentBaseUrl()).getHost();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return "localhost";
+        } catch (IllegalArgumentException e) {
+            throw new RuntimeException("Invalid or malformed payment.base.url in config.properties: " + getPaymentBaseUrl(), e);
         }
     }
 
@@ -59,9 +92,8 @@ public class TestConfig {
             }
 
             return port;
-        } catch (Exception e) {
-            e.printStackTrace();
-            return 8084;
+        } catch (IllegalArgumentException | MalformedURLException e) {
+            throw new RuntimeException("Invalid or malformed payment.base.url in config.properties: " + getPaymentBaseUrl(), e);
         }
     }
 }
