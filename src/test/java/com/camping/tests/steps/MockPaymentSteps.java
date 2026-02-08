@@ -1,9 +1,13 @@
 package com.camping.tests.steps;
 
+import com.camping.tests.config.TestConfig;
 import com.camping.tests.dto.ConfirmResponse;
 import com.camping.tests.dto.CreateResponse;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import io.cucumber.java.ko.먼저;
 
 import static com.camping.tests.common.TestConstants.DEFAULT_ORDER_ID;
@@ -15,6 +19,17 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 public class MockPaymentSteps {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Before
+    public void setupWireMock() {
+        WireMock.configureFor(TestConfig.getPaymentMockHost(), TestConfig.getPaymentMockPort());
+        WireMock.reset();
+    }
+
+    @After
+    public void teardownWireMock() {
+        WireMock.reset();
+    }
 
     @먼저("결제 서버가 정상적으로 응답 가능한 상태이다")
     public void 결제_서버가_정상적으로_응답_가능한_상태이다() throws JsonProcessingException {

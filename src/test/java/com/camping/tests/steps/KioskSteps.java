@@ -1,13 +1,9 @@
 package com.camping.tests.steps;
 
 import com.camping.tests.clients.KioskClient;
-import com.camping.tests.config.TestConfig;
 import com.camping.tests.context.ScenarioContext;
 import com.camping.tests.dto.PaymentConfirmRequest;
 import com.camping.tests.dto.PaymentCreateRequest;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import io.cucumber.java.After;
-import io.cucumber.java.Before;
 import io.cucumber.java.ko.그러면;
 import io.cucumber.java.ko.그리고;
 import io.cucumber.java.ko.만약;
@@ -26,17 +22,6 @@ public class KioskSteps {
     public KioskSteps(ScenarioContext context) {
         this.context = context;
         this.kioskClient = new KioskClient();
-    }
-
-    @Before
-    public void setupWireMock() {
-        WireMock.configureFor(TestConfig.getPaymentMockHost(), TestConfig.getPaymentMockPort());
-        WireMock.reset();
-    }
-
-    @After
-    public void teardownWireMock() {
-        WireMock.reset();
     }
 
     @만약("키오스크 서비스의 {string}에 GET 요청을 보낸다")
