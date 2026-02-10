@@ -98,26 +98,44 @@ A --> E["`Payments
     3.  `Admin` 서비스에 예약 상태 'CANCELLED' 또는 'REFUNDED' 반영.
     4.  캠핑장 사이트 재고 복원.
 
-## 4. 인증 규칙
+## 4. 인증 규칙 (Admin 서비스)
 
-`Admin` 서비스와 `Payments` 서비스는 **JWT (JSON Web Token) Bearer Token** 방식을 사용하여 인증을 처리합니다.
+Admin 서비스는 JWT (JSON Web Token) Bearer Token 방식을 사용하여 인증을 처리합니다.
 
 ### 4.1. Admin 서비스 인증 토큰 획득 및 사용
 
+Admin 서비스의 보호된 API에 접근하려면 다음 절차를 따르십시오.
+
 1.  **토큰 획득:**
-    *   `Admin` 서비스의 `POST /auth/login` 엔드포인트에 유효한 사용자 이름과 비밀번호로 로그인 요청을 보냅니다.
-    *   성공적인 응답으로 `Authorization` 헤더 또는 응답 본문에서 JWT 토큰을 획득합니다. (예: `{"token": "eyJ..."}`)
+    *   `POST /auth/login` 엔드포인트로 `admin.username` 및 `admin.password` 환경 변수에 설정된 사용자 이름과 비밀번호를 포함한 JSON 요청을 보냅니다.
+    *   성공적인 응답에서 `AUTH_TOKEN` 쿠키 값을 추출합니다.
+    *   **요청 예시 (HTTP POST):**
+        ```http
+        POST /auth/login HTTP/1.1
+        Content-Type: application/json
+
+        {
+            "username": "adminUser",
+            "password": "adminPassword"
+        }
+        ```
+    *   **응답 예시 (성공 시, 쿠키에 AUTH_TOKEN이 있을 경우):**
+        ```http
+        HTTP/1.1 200 OK
+        Set-Cookie: AUTH_TOKEN=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; Path=/; HttpOnly
+        Content-Type: application/json
+
+        {}
+        ```
+
 2.  **토큰 사용:**
-    *   획득한 JWT 토큰은 이후 `Admin` 서비스의 보호된 엔드포인트(예: `/admin/products`, `/admin/reservations`)에 요청을 보낼 때 HTTP `Authorization` 헤더에 `Bearer` 접두사와 함께 포함되어야 합니다.
-    *   **헤더 예시:** `Authorization: Bearer <획득된_JWT_토큰_값>`
-
-### 4.2. Payments 서비스 인증 토큰 획득 및 사용
-
-`Payments` 서비스 또한 JWT Bearer Token을 요구합니다. 현재 `WireMock`으로 모킹되어 있으므로, 실제 토큰 획득 메커니즘은 `Admin` 서비스와 유사하거나 별도의 인증 서비스로부터 발급받는 방식일 수 있습니다. 테스트 시나리오에서는 유효한 JWT 토큰을 시뮬레이션하거나 특정 테스트용 토큰을 사용하여 요청을 보낼 수 있습니다.
-
-### 4.3. 테스트 클라이언트 고려사항
-
-현재 `AdminClient.java` 및 `PaymentClient.java`는 인증 토큰을 자동으로 관리하거나 요청에 추가하는 로직을 직접적으로 포함하고 있지 않습니다. 효율적인 테스트를 위해 `com.camping.tests.clients.ApiClient`에 `setAuthToken(String token)`과 같은 메서드를 추가하거나, 각 클라이언트 생성 시 토큰을 주입받아 내부 `RequestSpecification`에 `Authorization` 헤더를 설정하는 방식으로 개선할 것을 권장합니다.
+    *   획득한 JWT 토큰을 사용하여 보호된 리소스에 접근합니다. 모든 후속 요청의 `Authorization` 헤더에 `Bearer` 접두사와 함께 토큰을 포함하십시오.
+    *   **헤더 형식:** `Authorization: Bearer <획득된_JWT_토큰_값>`
+    *   **요청 예시 (HTTP GET, 토큰 사용):**
+        ```http
+        GET /admin/products HTTP/1.1
+        Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        ```
 
 ## 5. 시드 데이터 규칙
 
