@@ -231,16 +231,24 @@ AI는 코드 생성 시 다음 패키지 구조를 준수해야 합니다.
 
 ### 9.2. 태그를 이용한 선택적 테스트 실행
 
+다음은 주요 태그 목록과 그 용도입니다.
+
 *   **`@ai-candidate`:** AI가 새로 생성한 시나리오에 기본적으로 부여되는 태그입니다. 이 태그가 붙은 시나리오는 아직 검토 및 승인 대기 중임을 의미합니다.
-    *   **실행:** `./gradlew :atdd-tests:test -Dcucumber.filter.tags="@ai-candidate"`
 *   **`@e2e`:** 검토를 통과하고 시스템 레벨 인수 테스트로 승인된 시나리오에 부여되는 태그입니다.
-    *   **실행:** `./gradlew :atdd-tests:test -Dcucumber.filter.tags="@e2e"`
 *   **`@smoke`:** 가장 핵심적인 기능에 대한 빠른 검증을 위한 시나리오에 부여합니다.
 *   **`@payment-failure`:** 결제 실패와 관련된 시나리오에 부여합니다.
 
-**다중 태그 조건:**
+**다양한 태그 기반 테스트 실행 방법:**
+
+단일 또는 다중 태그를 사용하여 테스트를 선택적으로 실행할 수 있습니다.
 
 ```bash
+# 특정 태그를 가진 시나리오 실행 (예: @ai-candidate)
+./gradlew :atdd-tests:test -Dcucumber.filter.tags="@ai-candidate"
+
+# 특정 태그를 가진 시나리오 실행 (예: @e2e)
+./gradlew :atdd-tests:test -Dcucumber.filter.tags="@e2e"
+
 # 여러 태그를 조합하여 테스트 실행 (AND 조건)
 ./gradlew :atdd-tests:test -Dcucumber.filter.tags="@e2e and @smoke"
 
@@ -253,8 +261,45 @@ AI는 코드 생성 시 다음 패키지 구조를 준수해야 합니다.
 
 ### 9.3. 로그 디버깅 방법
 
-(이 섹션은 추가 정보가 제공될 예정입니다. 일반적으로 테스트 실패 시 Gradle 빌드 로그 또는 각 서비스의 애플리케이션 로그를 통해 문제를 진단합니다. 서비스별 로그 파일 위치나 디버깅 설정에 대한 자세한 정보가 필요합니다.)
+인수 테스트 실패 시, `docker-compose` 환경에서 관련 서비스 로그를 실시간(`-f` 옵션)으로 확인하는 것이 중요합니다.
 
+**컨테이너 서비스 목록:**
+
+테스트 환경에서 사용 가능한 서비스 목록은 다음과 같습니다:
+
+| 서비스명       | 설명                                 |
+| :------------- | :----------------------------------- |
+| `kiosk`        | 사용자 인터페이스 및 예약 요청 처리      |
+| `admin`        | 관리자 기능 및 예약 관리               |
+| `reservation`  | 예약 생성 및 조회 로직                 |
+| `payments-mock`| 결제 서비스 모의 (WireMock)          |
+
+**로그 확인 명령어:**
+
+*   **모든 서비스 로그 실시간 확인:**
+    모든 서비스 로그를 실시간으로 스트리밍하여 확인합니다.
+    ```bash
+    docker-compose logs -f
+    ```
+
+*   **특정 서비스 로그 실시간 확인:**
+    특정 서비스 로그만 실시간으로 확인합니다.
+    ```bash
+    docker-compose logs -f <서비스명>
+    # 예시: Kiosk 서비스 로그 확인
+    ```
+
+*   **모든 서비스의 과거 로그 확인:**
+    모든 서비스의 전체 과거 로그를 출력합니다.
+    ```bash
+    docker-compose logs
+    ```
+
+*   **Kiosk 서비스 전용 Gradle 태스크:**
+    `gradle/tasks.gradle` 파일에 정의된 `kiosk` 서비스 전용 로그 확인 태스크를 사용합니다.
+    ```bash
+    ./gradlew kioskLogs
+    ```
 ## 10. WireMock 설정
 
 ### 10.1. 개요
