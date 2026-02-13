@@ -76,27 +76,25 @@ A --> E["`Payments
 ### 3.1. Happy Path 예시
 
 *   **정상 예약 성공:**
-    1.  `Kiosk`에서 캠핑장 사이트 선택.
-    2.  `Payments (WireMock)`에 결제 생성 요청.
-    3.  `Payments (WireMock)`에서 결제 승인.
-    4.  `Reservation` 서비스에 예약 요청 (CONFIRMED 상태 처리).
-    5.  `Admin` 서비스에서 예약 상태 `PAID` 확인.
-    6.  캠핑장 사이트 재고 감소.
+    1. `Kiosk`에서 사이트 선택 및 주문 생성
+    2. `Payments (WireMock)` 외부 결제 모듈을 통한 승인 성공
+    3. `Reservation` 서비스에서 결제 성공 정보를 수신하여 예약 확정 및 재고 차감
+    4. `Admin` 통한 최종 결제 완료 상태 및 재고 현황 검증
 
 ### 3.2. Sad Path 예시
 
 *   **결제 실패 보상:**
-    1.  `Kiosk`에서 캠핑장 사이트 선택 후 결제 시도.
-    2.  `Payments (WireMock)`에서 4xx/5xx 오류 또는 타임아웃 발생.
-    3.  `Reservation` 서비스에서 예약 미확정/실패 처리.
-    4.  `Admin` 서비스에 반영.
-    5.  이전에 감소했던 캠핑장 사이트 재고 복원.
+    1.  `Kiosk`에서 캠핑장 사이트 선택 후 결제 시도
+    2.  `Payments (WireMock)`에서 오류 발생 (4xx/5xx 또는 타임아웃)
+    3.  `Reservation` 서비스에서 예약 미확정/실패 처리
+    4.  `Admin` 서비스에 반영
+    5.  해당 사이트의 재고 수량이 원상복구 되었는지 검증
 
 *   **취소/환불:**
-    1.  `Reservation` 서비스에서 예약 후 취소 요청.
-    2.  `Payments (WireMock)`를 통한 환불 처리.
-    3.  `Admin` 서비스에 예약 상태 'CANCELLED' 또는 'REFUNDED' 반영.
-    4.  캠핑장 사이트 재고 복원.
+    1.  `Reservation` 서비스에서 예약 후 취소 요청
+    2.  `Payments (WireMock)`를 통한 환불 요청이 전송됨
+    3.  `Admin` 서비스에서 상태 변경 확인 ('CANCELLED' 또는 'REFUNDED')
+    4.  캠핑장 사이트 재고 복원 확인
 
 ## 4. 인증 규칙 (Admin 서비스)
 
